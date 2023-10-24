@@ -1,3 +1,78 @@
 ****** Chapter 9 - User authentication
 
-1  
+1 Let’s create a new templates directory and within it a registration directory
+    (.venv) > mkdir templates
+    (.venv) > mkdir templates/registration
+
+2 Now we need to tell Django about this new directory by updating the configuration for "DIRS"
+in django_project/settings.py.
+
+    # django_project/settings.py
+    TEMPLATES = [
+        {
+        ...
+        "DIRS": [BASE_DIR / "templates"],
+        ...
+        }
+        ]
+
+3 We need to tell Django where to send users in each case. The
+LOGIN_REDIRECT_URL and LOGOUT_REDIRECT_URL settings do that. We’ll configure both to redirect
+to our homepage which will have the named URL of 'home'.
+    # django_project/settings.py
+    LOGIN_REDIRECT_URL = "home" # new
+    LOGOUT_REDIRECT_URL = "home" # new
+
+4 Now we can create four new templates within our text editor:
+    • templates/base.html
+    • templates/home.html
+    • templates/registration/login.html
+    • templates/registration/signup.html
+
+5 templates/base.html
+    <!-- templates/base.html -->
+    <!DOCTYPE html>
+    <html>
+        <head>
+            <meta charset="utf-8">
+            <title>{% block title %}Newspaper App{% endblock title %}</title>
+        </head>
+
+        <body>
+            <main>
+                {% block content %}
+                {% endblock content %}
+            </main>
+        </body>
+    </html>
+
+6 templates/home.html
+    <!-- templates/home.html -->
+    {% extends "base.html" %}
+
+    {% block title %}Home{% endblock title %}
+    
+    {% block content %}
+        {% if user.is_authenticated %}
+            Hi {{ user.username }}!
+            <p><a href="{% url 'logout' %}">Log Out</a></p>
+        {% else %}
+            <p>You are not logged in</p>
+            <a href="{% url 'login' %}">Log In</a> |
+            <a href="{% url 'signup' %}">Sign Up</a>
+        {% endif %}
+    {% endblock content %}
+
+7 templates/registration/login.html
+    <!-- templates/registration/login.html -->
+    {% extends "base.html" %}
+    
+    {% block title %}Log In{% endblock title %}
+    
+    {% block content %}
+        <h2>Log In</h2>
+        <form method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Log In</button>
+        </form>
+    {% endblock content %}
