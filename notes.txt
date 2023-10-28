@@ -1,6 +1,7 @@
 ****** Chapter 9 - User authentication
 
 1 Let’s create a new templates directory and within it a registration directory
+
     (.venv) > mkdir templates
     (.venv) > mkdir templates/registration
 
@@ -19,6 +20,7 @@ in django_project/settings.py.
 3 We need to tell Django where to send users in each case. The
 LOGIN_REDIRECT_URL and LOGOUT_REDIRECT_URL settings do that. We’ll configure both to redirect
 to our homepage which will have the named URL of 'home'.
+
     # django_project/settings.py
     LOGIN_REDIRECT_URL = "home" # new
     LOGOUT_REDIRECT_URL = "home" # new
@@ -30,6 +32,7 @@ to our homepage which will have the named URL of 'home'.
     • templates/registration/signup.html
 
 5 templates/base.html
+
     <!-- templates/base.html -->
     <!DOCTYPE html>
     <html>
@@ -48,6 +51,7 @@ to our homepage which will have the named URL of 'home'.
 
 6 templates/home.html
     <!-- templates/home.html -->
+
     {% extends "base.html" %}
 
     {% block title %}Home{% endblock title %}
@@ -76,3 +80,104 @@ to our homepage which will have the named URL of 'home'.
             <button type="submit">Log In</button>
         </form>
     {% endblock content %}
+
+8 <!-- templates/registration/signup.html -->
+    
+    {% extends "base.html" %}
+    
+    {% block title %}Sign Up{% endblock title %}
+    
+    {% block content %}
+        <h2>Sign Up</h2>
+        <form method="post">{% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Sign Up</button>
+        </form>
+    {% endblock content %}
+
+9 In our django_project/urls.py file, we want to have our home.html template appear as the homepage
+Next, we want to “include” both the accounts app and the built-in auth app. The reason is that
+the built-in auth app already provides views and urls for log in and log out.
+
+# django_project/urls.py
+    
+    from django.contrib import admin
+    from django.urls import path, include # new
+    from django.views.generic.base import TemplateView # new
+
+    urlpatterns = [
+        path("admin/", admin.site.urls),
+        path("accounts/", include("accounts.urls")), # new
+        path("accounts/", include("django.contrib.auth.urls")), # new
+        path("", TemplateView.as_view(template_name="home.html"), name="home"), # new
+    ]
+
+10 create a file with your text editor called accounts/urls.py
+
+# accounts/urls.py
+    
+    from django.urls import path
+    from .views import SignUpView
+
+    urlpatterns = [
+        path("signup/", SignUpView.as_view(), name="signup"),
+    ]
+
+11  We’re using Django’s generic CreateView here and telling it to use our CustomUserCreationForm,
+to redirect to login once a user signs up successfully, and that our template is named signup.html.
+
+# accounts/views.py
+
+from django.urls import reverse_lazy
+from django.views.generic import CreateView
+from .forms import CustomUserCreationForm
+
+class SignUpView(CreateView):
+    form_class = CustomUserCreationForm
+    success_url = reverse_lazy('login')
+    template_name = "registration/signup.html"
+
+12 Start up the server with python manage.py runserver and go to the homepage.
+
+13 Now we’re on the logged out homepage. Go ahead and click on Log In link and use your superuser
+credentials.
+
+14 Now use the “Log Out” link to return to the homepage and this time click on the “Sign Up” link.
+
+15 Navigate to the admin at http://127.0.0.1:8000/admin in your web browser and then log in to
+view the two user accounts.
+
+16 Everything is working but you may notice that there is no “Email address” for our testuser. Why
+is that? Well, our sign up page has no email field because it was not included in accounts/forms.py.
+
+17 Currently, in accounts/forms.py under fields we’re using Meta.fields, which just displays
+the default settings of username/age/password.
+
+    # accounts/forms.py
+    
+    from django.contrib.auth.forms import UserCreationForm, UserChangeForm
+    from .models import CustomUser
+
+    class CustomUserCreationForm(UserCreationForm):
+        class Meta(UserCreationForm):
+            model = CustomUser
+            fields = (
+            "username",
+            "email",
+            "age",
+        ) # new
+
+    class CustomUserChangeForm(UserChangeForm):
+        class Meta:
+            model = CustomUser
+            fields = (
+            "username",
+            "email",
+            "age",
+            ) # new
+
+18 Sign up with a new user account
+
+19 Then switch back to the admin page–log in using our superuser account
+
+20 create a commit with changes 
